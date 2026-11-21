@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">ALL-IN-ONE</string>
+    <string name="tab_space">Spațiu</string>
+    <string name="tab_ai">Asistent</string>
+    <string name="tab_research">Cercetare</string>
+    <string name="tab_email">Email</string>
+    <string name="tab_scanner">Scanner</string>
+    <string name="tab_video">Video</string>
+    <string name="tab_productivity">Productivitate</string>
+    <string name="tab_files">Fișiere</string>
+    <string name="tab_settings">Setări</string>
+    <string name="search_hint">Caută în tot spațiul…</string>
+    <string name="empty_space">Spațiul tău este gol.\nAtinge + pentru a adăuga obiecte.</string>
+</resources>

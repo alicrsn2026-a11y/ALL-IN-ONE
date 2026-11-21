@@ -1,0 +1,60 @@
+name: Android Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle 8.9
+        run: |
+          wget -q https://services.gradle.org/distributions/gradle-8.9-bin.zip
+          unzip -q gradle-8.9-bin.zip
+          echo "$GITHUB_WORKSPACE/gradle-8.9/bin" >> $GITHUB_PATH
+
+      - name: Build debug APK
+        run: |
+          gradle :app:assembleDebug --no-daemon --stacktrace
+        env:
+          ORG_GRADLE_PROJECT_android_useAndroidX: "true"
+
+      - name: Build release APK
+        run: |
+          gradle :app:assembleRelease --no-daemon --stacktrace
+
+      - name: Upload APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: allinone-apks
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
+      - name: Upload source archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: allinone-sources
+          path: |
+            .
+            !.git
+            !build
+            !app/build
+            !gradle-8.9-bin.zip
