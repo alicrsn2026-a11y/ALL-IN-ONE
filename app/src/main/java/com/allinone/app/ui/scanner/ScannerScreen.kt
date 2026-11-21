@@ -38,12 +38,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.allinone.app.data.AppContainer
 import com.allinone.app.data.db.entity.ScanEntity
 import com.allinone.app.util.PdfExporter
+import com.google.android.gms.tasks.Tasks
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -54,7 +57,10 @@ import java.util.concurrent.Executor
 fun ScannerScreen(container: AppContainer) {
     val context = LocalContext.current
     val repo = container.scanRepository
-    val scans by repo.observeAll().collectAsStateWithLifecycle()
+    val scans by repo.observeAll().collectAsStateWithLifecycle(
+        initialValue = emptyList(),
+        lifecycle = LocalLifecycleOwner.current.lifecycle
+    )
     val scope = rememberCoroutineScope()
     var capturedText by remember { mutableStateOf("") }
     var lastImageFile by remember { mutableStateOf<File?>(null) }
@@ -139,55 +145,54 @@ fun ScannerScreen(container: AppContainer) {
                     }
                 }
             }
-
-            IconButton(
-                onClick = {
-                    val capture = imageCapture
-                    if (capture != null) {
-                        val file = File(context.cacheDir, "scan_${System.currentTimeMillis()}.jpg")
-                        val options = ImageCapture.OutputFileOptions.Builder(file).build()
-                        capture.takePicture(
-                            options,
-                            executor,
-                            object : ImageCapture.OnImageSavedCallback {
-                                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                                    scope.launch {
-                                        val bitmap = withContext(Dispatchers.IO) {
-                                            BitmapFactory.decodeFile(file.absolutePath)
-                                        }
-                                        val text = if (bitmap != null) {
-                                            val image = InputImage.fromBitmap(bitmap, 0)
-                                            val recognizer = TextRecognition.getClient()
-                                            val result = withContext(Dispatchers.IO) {
-                                                recognizer.process(image).get()
-                                            }
-                                            result.text
-                                        } else ""
-                                        val pdf = bitmap?.let { PdfExporter.exportBitmapToPdf(context, it, "scan_${System.currentTimeMillis()}") }
-                                        repo.insert(
-                                            ScanEntity(
-                                                title = "Scanare ${System.currentTimeMillis()}",
-                                                imagePath = file.absolutePath,
-                                                pdfPath = pdf?.absolutePath,
-                                                ocrText = text
-                                            )
-                                        )
-                                        capturedText = text
-                                        lastImageFile = file
+        }
+        IconButton(
+            onClick = {
+                val capture = imageCapture
+                if (capture != null) {
+                    val file = File(context.cacheDir, "scan_${System.currentTimeMillis()}.jpg")
+                    val options = ImageCapture.OutputFileOptions.Builder(file).build()
+                    capture.takePicture(
+                        options,
+                        executor,
+                        object : ImageCapture.OnImageSavedCallback {
+                            override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                                scope.launch {
+                                    val bitmap = withContext(Dispatchers.IO) {
+                                        BitmapFactory.decodeFile(file.absolutePath)
                                     }
-                                }
-
-                                override fun onError(exception: ImageCaptureException) {
-                                    capturedText = "Eroare captură: ${exception.message}"
+                                    val text = if (bitmap != null) {
+                                        val image = InputImage.fromBitmap(bitmap, 0)
+                                        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+                                        val result = withContext(Dispatchers.IO) {
+                                            Tasks.await(recognizer.process(image))
+                                        }
+                                        result.text
+                                    } else ""
+                                    val pdf = bitmap?.let { PdfExporter.exportBitmapToPdf(context, it, "scan_${System.currentTimeMillis()}") }
+                                    repo.insert(
+                                        ScanEntity(
+                                            title = "Scanare ${System.currentTimeMillis()}",
+                                            imagePath = file.absolutePath,
+                                            pdfPath = pdf?.absolutePath,
+                                            ocrText = text
+                                        )
+                                    )
+                                    capturedText = text
+                                    lastImageFile = file
                                 }
                             }
-                        )
-                    }
-                },
-                modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp)
-            ) {
-                Icon(Icons.Filled.CameraAlt, contentDescription = "Capturează")
-            }
+
+                            override fun onError(exception: ImageCaptureException) {
+                                capturedText = "Eroare captură: ${exception.message}"
+                            }
+                        }
+                    )
+                }
+            },
+            modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp)
+        ) {
+            Icon(Icons.Filled.CameraAlt, contentDescription = "Capturează")
         }
     }
 }

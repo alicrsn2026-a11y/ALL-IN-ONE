@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.allinone.app.data.AppContainer
 import com.allinone.app.data.db.entity.MessageEntity
@@ -40,11 +41,17 @@ import kotlinx.coroutines.launch
 fun AiScreen(container: AppContainer) {
     val chatRepo = container.chatRepository
     val aiService = remember { AiService(container.encryptedPrefs) }
-    val conversations by chatRepo.observeConversations().collectAsStateWithLifecycle()
+    val conversations by chatRepo.observeConversations().collectAsStateWithLifecycle(
+        initialValue = emptyList(),
+        lifecycle = LocalLifecycleOwner.current.lifecycle
+    )
 
     var activeConversationId by remember { mutableLongStateOf(-1L) }
     val messages by chatRepo.observeMessages(activeConversationId)
-        .collectAsStateWithLifecycle(initialValue = emptyList())
+        .collectAsStateWithLifecycle(
+            initialValue = emptyList(),
+            lifecycle = LocalLifecycleOwner.current.lifecycle
+        )
     var input by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()

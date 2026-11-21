@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
@@ -45,7 +46,10 @@ import kotlinx.coroutines.launch
 fun VideoScreen(container: AppContainer) {
     val context = LocalContext.current
     val repo = container.videoRepository
-    val videos by repo.observeAll().collectAsStateWithLifecycle()
+    val videos by repo.observeAll().collectAsStateWithLifecycle(
+        initialValue = emptyList(),
+        lifecycle = LocalLifecycleOwner.current.lifecycle
+    )
     val scope = rememberCoroutineScope()
 
     var playingUri by remember { mutableStateOf<String?>(null) }

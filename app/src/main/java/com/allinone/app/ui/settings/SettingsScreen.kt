@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.allinone.app.data.AppContainer
 import com.allinone.app.data.security.EncryptedPrefs
@@ -34,10 +35,22 @@ fun SettingsScreen(container: AppContainer) {
     val prefs = container.encryptedPrefs
     val scope = rememberCoroutineScope()
 
-    val themeMode by settings.themeMode.collectAsStateWithLifecycle()
-    val space2d by settings.space2dMode.collectAsStateWithLifecycle()
-    val aiProvider by settings.aiProvider.collectAsStateWithLifecycle()
-    val backupAuto by settings.backupAuto.collectAsStateWithLifecycle()
+    val themeMode by settings.themeMode.collectAsStateWithLifecycle(
+        initialValue = 0,
+        lifecycle = LocalLifecycleOwner.current.lifecycle
+    )
+    val space2d by settings.space2dMode.collectAsStateWithLifecycle(
+        initialValue = false,
+        lifecycle = LocalLifecycleOwner.current.lifecycle
+    )
+    val aiProvider by settings.aiProvider.collectAsStateWithLifecycle(
+        initialValue = "openai",
+        lifecycle = LocalLifecycleOwner.current.lifecycle
+    )
+    val backupAuto by settings.backupAuto.collectAsStateWithLifecycle(
+        initialValue = true,
+        lifecycle = LocalLifecycleOwner.current.lifecycle
+    )
 
     var apiKey by remember { mutableStateOf(prefs.getString(EncryptedPrefs.KEY_API_KEY)) }
     var smtpHost by remember { mutableStateOf(prefs.getString(EncryptedPrefs.KEY_EMAIL_SMTP_HOST)) }

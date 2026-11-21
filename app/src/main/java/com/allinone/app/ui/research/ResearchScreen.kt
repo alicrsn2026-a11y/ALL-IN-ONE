@@ -28,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.allinone.app.data.AppContainer
 import com.allinone.app.data.db.entity.ResearchResultEntity
@@ -37,7 +38,10 @@ import kotlinx.coroutines.launch
 @Composable
 fun ResearchScreen(container: AppContainer) {
     val repo = container.researchRepository
-    val saved by repo.observeAll().collectAsStateWithLifecycle()
+    val saved by repo.observeAll().collectAsStateWithLifecycle(
+        initialValue = emptyList(),
+        lifecycle = LocalLifecycleOwner.current.lifecycle
+    )
     var query by remember { mutableStateOf("") }
     var results by remember { mutableStateOf<List<ResearchResultEntity>>(emptyList()) }
     var searching by remember { mutableStateOf(false) }

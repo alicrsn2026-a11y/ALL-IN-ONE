@@ -4,8 +4,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.awaitPointerEvent
-import androidx.compose.foundation.gestures.waitForUpOrCancel
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,20 +55,28 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlin.math.abs
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.allinone.app.data.AppContainer
 import com.allinone.app.data.db.entity.SpaceItemEntity
 import com.allinone.app.util.containerFactory
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.abs
 
 @Composable
 fun InfiniteSpaceScreen(container: AppContainer) {
     val vm: SpaceViewModel = viewModel(factory = containerFactory(container) { SpaceViewModel(it) })
-    val items by vm.items.collectAsStateWithLifecycle()
-    val folderPath by vm.folderPath.collectAsStateWithLifecycle()
+    val items by vm.items.collectAsStateWithLifecycle(
+        initialValue = emptyList(),
+        lifecycle = LocalLifecycleOwner.current.lifecycle
+    )
+    val folderPath by vm.folderPath.collectAsStateWithLifecycle(
+        initialValue = emptyList(),
+        lifecycle = LocalLifecycleOwner.current.lifecycle
+    )
 
     var zoom by remember { mutableFloatStateOf(1f) }
     var camX by remember { mutableFloatStateOf(0f) }
@@ -84,7 +91,10 @@ fun InfiniteSpaceScreen(container: AppContainer) {
     var newFolderName by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
 
-    val searchResults by remember(query) { vm.search(query) }.collectAsStateWithLifecycle()
+    val searchResults by remember(query) { vm.search(query) }.collectAsStateWithLifecycle(
+        initialValue = emptyList(),
+        lifecycle = LocalLifecycleOwner.current.lifecycle
+    )
 
     var canvasW by remember { mutableFloatStateOf(0f) }
     var canvasH by remember { mutableFloatStateOf(0f) }
@@ -146,7 +156,7 @@ fun InfiniteSpaceScreen(container: AppContainer) {
                             val hit = hitTest(sx, sy)
 
                             if (hit != null) {
-                                val longPress = withTimeoutOrNull(400) { waitForUpOrCancel() } == null
+                                val longPress = withTimeoutOrNull(400) { waitForUpOrCancellation() } == null
                                 if (longPress) {
                                     menuItem = hit
                                 } else {
@@ -363,7 +373,7 @@ fun InfiniteSpaceScreen(container: AppContainer) {
                     menuItem = null
                 })
                 DropdownMenuItem(text = { Text("Redenumește") }, onClick = {
-                    vm.renameItem(item, item.title + " (editat)")
+                    scope.launch { vm.renameItem(item, item.title + " (editat)") }
                     menuItem = null
                 })
                 DropdownMenuItem(text = { Text("Șterge") }, onClick = {

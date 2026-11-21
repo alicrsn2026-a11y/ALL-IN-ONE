@@ -31,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.allinone.app.data.AppContainer
 import com.allinone.app.data.db.entity.EmailEntity
@@ -40,7 +41,10 @@ import kotlinx.coroutines.launch
 fun EmailScreen(container: AppContainer) {
     val repo = container.emailRepository
     var folder by remember { mutableStateOf(EmailEntity.FOLDER_INBOX) }
-    val emails by repo.observeFolder(folder).collectAsStateWithLifecycle()
+    val emails by repo.observeFolder(folder).collectAsStateWithLifecycle(
+        initialValue = emptyList(),
+        lifecycle = LocalLifecycleOwner.current.lifecycle
+    )
 
     var composing by remember { mutableStateOf(false) }
     var subject by remember { mutableStateOf("") }

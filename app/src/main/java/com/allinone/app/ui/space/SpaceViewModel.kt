@@ -57,7 +57,7 @@ class SpaceViewModel(private val container: AppContainer) : ViewModel() {
         _currentFolderId.value = null
     }
 
-    fun getItem(id: Long) = repo.getById(id)
+    suspend fun getItem(id: Long) = repo.getById(id)
 
     suspend fun createFolder(title: String): Long =
         repo.createFolder(title, _currentFolderId.value)

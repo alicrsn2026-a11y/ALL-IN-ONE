@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -34,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.allinone.app.data.AppContainer
 import com.allinone.app.data.db.entity.NoteEntity
@@ -44,8 +44,14 @@ import kotlinx.coroutines.launch
 fun ProductivityScreen(container: AppContainer) {
     val noteRepo = container.noteRepository
     val taskRepo = container.taskRepository
-    val notes by noteRepo.observeAll().collectAsStateWithLifecycle()
-    val tasks by taskRepo.observeAll().collectAsStateWithLifecycle()
+    val notes by noteRepo.observeAll().collectAsStateWithLifecycle(
+        initialValue = emptyList(),
+        lifecycle = LocalLifecycleOwner.current.lifecycle
+    )
+    val tasks by taskRepo.observeAll().collectAsStateWithLifecycle(
+        initialValue = emptyList(),
+        lifecycle = LocalLifecycleOwner.current.lifecycle
+    )
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
