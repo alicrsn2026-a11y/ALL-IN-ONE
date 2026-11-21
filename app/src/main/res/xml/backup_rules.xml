@@ -2,5 +2,4 @@
 <full-backup-content>
     <include domain="database" path="all_in_one.db" />
     <include domain="sharedpref" path="." />
-    <exclude domain="root" path="." />
 </full-backup-content>
